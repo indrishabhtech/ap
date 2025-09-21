@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Our Special Space</title>
+  <style>
+    /* === FULL THEME (navy palette, polished) === */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root{
+        --navy:#0a192f; --light-navy:#112240; --lightest-navy:#233554;
+        --slate:#8892b0; --light-slate:#a8b2d1; --lightest-slate:#ccd6f6;
+        --white:#e6f1ff; --accent:#64ffda; --accent-tint:rgba(100,255,218,0.1);
+        --pink:#f57dff; --blue:#57cbff;
+    }
+    body{
+        font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+        background: linear-gradient(135deg,var(--navy) 0%,var(--light-navy) 100%);
+        color:var(--lightest-slate); min-height:100vh; overflow-x:hidden; position:relative;
+        -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none;
+    }
+    .bg-animation{ position:fixed; width:100%; height:100%; top:0; left:0; z-index:-1; opacity:0.03; }
+    .bg-animation span{ position:absolute; display:block; width:20px; height:20px; background:var(--accent); animation:float 25s infinite; bottom:0;}
+    @keyframes float{0%{transform:translateY(100vh) rotate(0deg);opacity:0;}10%{opacity:1;}90%{opacity:1;}100%{transform:translateY(-100vh) rotate(720deg);opacity:0;}}
+    .hearts{ position:fixed; bottom:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0;}
+    .heart{ position:absolute; bottom:0; font-size:20px; animation:floatHeart 5s linear infinite; opacity:0;}
+    @keyframes floatHeart{0%{bottom:0; opacity:0;}10%{opacity:.7;}90%{opacity:.7;}100%{bottom:100vh; opacity:0;}}
+    .login-container{ display:flex; justify-content:center; align-items:center; min-height:100vh; padding:20px;}
+    .login-card{ background:rgba(17,34,64,0.9); backdrop-filter:blur(10px); border-radius:20px; padding:40px; max-width:400px; width:100%; border:1px solid var(--lightest-navy); box-shadow:0 20px 60px rgba(0,0,0,0.3); animation:slideUp .5s ease;}
+    @keyframes slideUp{from{opacity:0; transform:translateY(30px);}to{opacity:1;transform:translateY(0);} }
+    .login-title{ font-size:2em; color:var(--white); text-align:center; margin-bottom:10px; background:linear-gradient(135deg,var(--accent),var(--blue)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;}
+    .login-subtitle{ text-align:center; color:var(--slate); margin-bottom:30px; font-size:.9em;}
+    .input-group{ margin-bottom:25px; }
+    .input-group label{ display:block; color:var(--light-slate); margin-bottom:8px; font-size:.9em;}
+    .input-group input{ width:100%; padding:12px 15px; background:var(--lightest-navy); border:2px solid transparent; border-radius:10px; color:var(--white); font-size:1em; transition:all .3s;}
+    .input-group input:focus{ outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-tint); }
+    .btn{ width:100%; padding:12px; background:linear-gradient(135deg,var(--accent),var(--blue)); border:none; border-radius:10px; color:var(--navy); font-weight:bold; font-size:1em; cursor:pointer; transition:transform .3s, box-shadow .3s;}
+    .btn:hover{ transform:translateY(-2px); box-shadow:0 10px 30px rgba(100,255,218,.3); }
+    .main-container{ display:none; min-height:100vh; animation:fadeIn .5s ease;}
+    @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+    .header{ background:rgba(17,34,64,0.95); backdrop-filter:blur(10px); padding:20px; border-bottom:1px solid var(--lightest-navy); position:sticky; top:0; z-index:100;}
+    .welcome-message { text-align:center; font-size:1.5em; color:var(--white); margin-bottom:10px; animation:glow 2s ease-in-out infinite;}
+    @keyframes glow{0%,100%{text-shadow:0 0 10px rgba(100,255,218,.5);}50%{text-shadow:0 0 20px rgba(100,255,218,.8);} }
+    .time-greeting{ text-align:center; color:var(--slate); font-size:.9em;}
+    .billboard{ background:linear-gradient(135deg,var(--lightest-navy),var(--light-navy)); border-radius:15px; padding:20px; margin:20px; border:1px solid var(--accent); position:relative; overflow:hidden;}
+    .billboard::before{ content:'✨'; position:absolute; top:10px; right:10px; font-size:1.5em; animation:sparkle 2s infinite;}
+    @keyframes sparkle{0%,100%{opacity:1;}50%{opacity:.3;}}
+    .billboard-title{ color:var(--accent); font-size:1.2em; margin-bottom:10px;}
+    .billboard-message{ color:var(--white); line-height:1.6;}
+    .content-section{ padding:20px; }
+    .dropdown-container{ max-width:600px; margin:0 auto 30px; }
+    .dropdown{ width:100%; padding:15px; background:var(--lightest-navy); border:2px solid var(--lightest-navy); border-radius:10px; color:var(--white); font-size:1em;}
+    .content-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:20px; padding:20px; max-width:1200px; margin:0 auto; }
+    .content-card{ background:rgba(35,53,84,.5); border-radius:15px; padding:20px; border:1px solid var(--lightest-navy); transition:all .3s; cursor:default; position:relative; overflow:hidden;}
+    .content-card:hover{ transform:translateY(-5px); border-color:var(--accent); box-shadow:0 10px 30px rgba(100,255,218,.2);}
+    .content-title{ color:var(--white); font-size:1.1em; margin-bottom:10px;}
+    .content-type{ display:inline-block; padding:5px 10px; background:var(--accent-tint); color:var(--accent); border-radius:5px; font-size:.8em; margin-bottom:10px;}
+    .content-description{ color:var(--slate); font-size:.9em; margin-bottom:15px;}
+    .content-actions{ display:flex; gap:10px;}
+    .action-btn{ flex:1; padding:8px; background:transparent; border:1px solid var(--accent); border-radius:5px; color:var(--accent); cursor:pointer; transition:all .3s; font-size:.9em;}
+    .action-btn:hover{ background:var(--accent); color:var(--navy);}
+    .modal{ display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,25,47,0.95); z-index:1000; justify-content:center; align-items:center; padding:20px; }
+    .modal-content{ background:var(--light-navy); border-radius:20px; max-width:900px; width:100%; max-height:90vh; overflow-y:auto; padding:30px; position:relative; animation:modalSlideIn .3s ease;}
+    @keyframes modalSlideIn{from{opacity:0; transform:scale(.9);} to{opacity:1; transform:scale(1);} }
+    .modal-close{ position:absolute; top:15px; right:15px; background:transparent; border:none; color:var(--slate); font-size:2em; cursor:pointer;}
+    .default-page{ display:none; min-height:100vh; padding:40px 20px; text-align:center;}
+    .default-title{ font-size:3em; background:linear-gradient(135deg,var(--pink),var(--blue)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:20px;}
+    .quote-container{ background:rgba(35,53,84,.5); border-radius:15px; padding:30px; margin:30px 0; border-left:4px solid var(--accent);}
+    .quote{ font-size:1.2em; color:var(--lightest-slate); font-style:italic; line-height:1.6;}
+    .quote-author{ margin-top:15px; color:var(--slate); font-size:.9em;}
+    @media (max-width:768px){ .login-card{ padding:30px 20px;} .welcome-message{ font-size:1.2em;} .content-grid{ grid-template-columns:1fr; padding:15px;} .modal-content{ padding:20px;} .default-title{ font-size:2em;} }
+    .loading{ display:inline-block; width:20px; height:20px; border:3px solid var(--lightest-navy); border-top:3px solid var(--accent); border-radius:50%; animation:spin 1s linear infinite; margin-left:10px; }
+    @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);} }
+    .small{ font-size:0.9rem; color:var(--slate) }
+    /* notification styling small fixes */
+    #notifPanel { max-width: 360px; }
+    #notifBadge { display:flex; align-items:center; justify-content:center; }
+  </style>
+</head>
+
+<body>
+  <!-- Background -->
+  <div class="bg-animation" aria-hidden="true">
+    <span style="left:10%; animation-delay:0s;"></span>
+    <span style="left:20%; animation-delay:2s;"></span>
+    <span style="left:30%; animation-delay:4s;"></span>
+    <span style="left:40%; animation-delay:1s;"></span>
+    <span style="left:50%; animation-delay:3s;"></span>
+    <span style="left:60%; animation-delay:5s;"></span>
+    <span style="left:70%; animation-delay:2s;"></span>
+    <span style="left:80%; animation-delay:4s;"></span>
+    <span style="left:90%; animation-delay:1s;"></span>
+  </div>
+
+  <!-- Floating hearts -->
+  <div class="hearts" id="hearts" aria-hidden="true"></div>
+
+  <!-- Login -->
+  <div class="login-container" id="loginContainer" role="region" aria-label="Login">
+    <div class="login-card" role="form" aria-labelledby="loginTitle">
+      <h1 class="login-title" id="loginTitle">Welcome ✨</h1>
+      <p class="login-subtitle">Enter your name to continue</p>
+      <div class="input-group">
+        <label for="nameInput">Your Name</label>
+        <input type="text" id="nameInput" placeholder="Enter your full name" autocomplete="off" />
+      </div>
+      <button class="btn" id="enterBtn">Enter Our Space</button>
+      <p class="small" style="text-align:center; margin-top:12px;">(Private — registration limited to invited names)</p>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main-container" id="mainContainer" aria-live="polite">
+    <header class="header" role="banner">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div style="flex:1">
+          <div class="welcome-message" id="welcomeMessage"></div>
+          <div class="time-greeting" id="timeGreeting"></div>
+        </div>
+
+        <!-- Notification icon -->
+        <div style="position:relative">
+          <button id="notifBtn" title="Notifications" aria-haspopup="true" aria-expanded="false" style="background:transparent;border:none;cursor:pointer;font-size:20px;color:var(--accent)">
+            🔔
+          </button>
+          <div id="notifBadge" style="position:absolute;top:-6px;right:-6px;background:#ff4d4f;color:white;border-radius:50%;width:20px;height:20px;display:none;align-items:center;justify-content:center;font-size:12px;"></div>
+
+          <!-- notifications panel -->
+          <div id="notifPanel" style="display:none;position:absolute;right:0;top:36px;width:320px;background:var(--light-navy);border:1px solid rgba(255,255,255,0.04);border-radius:10px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,0.4);z-index:200;" role="dialog" aria-label="Notifications">
+            <div style="font-weight:700;margin-bottom:8px;color:var(--accent)">New</div>
+            <div id="notifList" style="max-height:320px;overflow:auto"></div>
+            <div style="text-align:right;margin-top:8px">
+              <button id="markAllSeen" style="padding:6px 10px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--slate)">Mark all seen</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="billboard" id="billboard" role="region" aria-live="polite">
+      <div class="billboard-title">💌 Special Message for You</div>
+      <div class="billboard-message" id="billboardMessage">Every moment with you feels like a beautiful story being written. Thank you for being the amazing person you are! 🌟</div>
+    </div>
+
+    <div class="content-section">
+      <div class="dropdown-container">
+        <select class="dropdown" id="contentDropdown" aria-label="Filter content">
+          <option value="all">✨ All Content</option>
+          <option value="images">📸 Images</option>
+          <option value="videos">🎬 Videos</option>
+          <option value="audio">🎵 Audio</option>
+          <option value="pdfs">📚 PDFs & Stories</option>
+        </select>
+      </div>
+
+      <div class="content-grid" id="contentGrid" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- Default -->
+  <div class="default-page" id="defaultPage">
+    <div class="default-content">
+      <h1 class="default-title">Inspire & Create</h1>
+      <div class="quote-container">
+        <p class="quote">"The best and most beautiful things in the world cannot be seen or even touched — they must be felt with the heart."</p>
+        <p class="quote-author">- Helen Keller</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal" id="contentModal" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal-close" id="modalCloseBtn" aria-label="Close">&times;</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+  /* ========== CONFIG ========== */
+  const API_BASE = ''; // set to backend if different origin, e.g. 'https://example.com'
+  const ALLOWED_NAMES_RAW = ['Ananya Pandey', 'Rishabh Mishra'];
+  const MAX_ATTEMPTS = 3;
+
+  /* ========== UTILITIES ========== */
+  const el = id => document.getElementById(id);
+  function normalizeName(s){ return (s||'').toLowerCase().replace(/[^a-z\s]/g,' ').split(/\s+/).filter(Boolean).join(' '); }
+  function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+
+  // expand allowed names (first/last)
+  const ALLOWED_NAMES = [];
+  ALLOWED_NAMES_RAW.forEach(n=>{
+    const norm = normalizeName(n);
+    const parts = norm.split(' ');
+    if(parts.length>=2){ ALLOWED_NAMES.push(norm); ALLOWED_NAMES.push(parts.slice().reverse().join(' ')); }
+    else ALLOWED_NAMES.push(norm);
+  });
+
+  /* ========== STATE (localStorage) ========== */
+  let userData = JSON.parse(localStorage.getItem('userData') || '{}');
+  let registrationLocked = localStorage.getItem('registrationLocked') === 'true';
+  let blockedUsers = JSON.parse(localStorage.getItem('blockedUsers') || '[]');
+  let attemptCount = parseInt(localStorage.getItem('attemptCount') || '0', 10) || 0;
+  let activityLog = JSON.parse(localStorage.getItem('activityLog') || '[]');
+
+  /* ========== DOM refs ========== */
+  const loginContainer = el('loginContainer');
+  const mainContainer = el('mainContainer');
+  const defaultPage = el('defaultPage');
+  const nameInput = el('nameInput');
+  const enterBtn = el('enterBtn');
+  const contentGrid = el('contentGrid');
+  const billboardMsgEl = el('billboardMessage');
+  const modal = el('contentModal');
+  const modalBody = el('modalBody');
+  const modalCloseBtn = el('modalCloseBtn');
+
+  /* ========== GOOGLE DRIVE HELPERS ========== */
+  function extractDriveId(url){
+    try {
+      // /d/FILEID or id=FILEID
+      const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if(m && m[1]) return m[1];
+      const u = new URL(url);
+      const id = u.searchParams.get('id');
+      if(id) return id;
+    } catch(e){ /* ignore */ }
+    return null;
+  }
+  function convertDriveLinkForEmbed(url){
+    const id = extractDriveId(url); if(id) return `https://drive.google.com/file/d/${id}/preview`;
+    return url;
+  }
+  function convertDriveLinkForDownload(url){
+    const id = extractDriveId(url); if(id) return `https://drive.google.com/uc?export=download&id=${id}`;
+    return url;
+  }
+
+  /* ========== NOTIFICATIONS (files + billboard) ========== */
+  const NOTIF_POLL_INTERVAL = 20000;
+  const NOTIF_FILE_KEY = 'lastSeenFileTimestamp';
+  const NOTIF_BB_KEY = 'lastSeenBillboardMessage';
+  let notifPanelOpen = false;
+
+  async function pollNotifications(){
+    try {
+      // files
+      const filesRes = await fetch((API_BASE || '') + '/api/files', { cache: 'no-store' });
+      let files = [];
+      if (filesRes.ok) {
+        const data = await filesRes.json();
+        files = (data && data.files) ? data.files.slice().sort((a,b)=> new Date(b.uploadedAt) - new Date(a.uploadedAt)) : [];
+      }
+
+      // billboard
+      const bbRes = await fetch((API_BASE || '') + '/api/billboard', { cache: 'no-store' });
+      const bbData = (bbRes.ok && await bbRes.json()) ? await bbRes.json() : null;
+
+      // compute new files
+      const lastSeenFiles = localStorage.getItem(NOTIF_FILE_KEY) || '';
+      const lastSeenTime = lastSeenFiles ? new Date(lastSeenFiles).getTime() : 0;
+      const newFiles = files.filter(f => new Date(f.uploadedAt).getTime() > lastSeenTime);
+
+      // compute billboard change
+      let bbChanged = false;
+      let bbMessage = '';
+      if (bbData && bbData.billboard && bbData.billboard.message) {
+        bbMessage = bbData.billboard.message;
+        const lastMsg = localStorage.getItem(NOTIF_BB_KEY) || '';
+        if (bbMessage !== lastMsg) bbChanged = true;
+      }
+
+      // build notif items: billboard first (if changed) then files
+      const notifItems = [];
+      if (bbChanged) {
+        notifItems.push({
+          id: 'billboard-' + (bbData.billboard.updatedAt || Date.now()),
+          type: 'billboard',
+          message: bbMessage,
+          time: bbData.billboard.updatedAt || new Date().toISOString()
+        });
+      }
+      newFiles.forEach(f => notifItems.push({ id: f._id || f.url, type: 'file', file: f, time: f.uploadedAt }));
+
+      // store to session so panel shows same list until marked seen
+      if (notifItems.length) {
+        sessionStorage.setItem('notifItems', JSON.stringify(notifItems));
+        showNotifBadge(notifItems.length);
+      } else {
+        // nothing new -> clear badge only if billboard not changed and no new files
+        const sess = sessionStorage.getItem('notifItems');
+        if (!sess) hideNotifBadge();
+      }
+
+      // if panel open, render
+      if (notifPanelOpen) renderNotifPanel();
+    } catch (e) {
+      console.warn('pollNotifications error', e);
+    }
+  }
+
+  function showNotifBadge(count){
+    const b = el('notifBadge');
+    b.style.display = 'flex';
+    b.textContent = (count > 99) ? '99+' : String(count);
+  }
+  function hideNotifBadge(){
+    const b = el('notifBadge'); b.style.display = 'none'; b.textContent = '';
+  }
+
+  function renderNotifPanel(){
+    const container = el('notifList');
+    container.innerHTML = '';
+    const stored = sessionStorage.getItem('notifItems');
+    const items = stored ? JSON.parse(stored) : [];
+    if (!items.length) {
+      container.innerHTML = `<div class="small" style="color:var(--slate)">No new uploads or messages</div>`;
+      return;
+    }
+    items.forEach(it=>{
+      if (it.type === 'billboard') {
+        const row = document.createElement('div');
+        row.style.padding = '8px'; row.style.borderBottom = '1px solid rgba(255,255,255,0.02)';
+        row.innerHTML = `<div style="font-weight:600;color:var(--accent)">New message</div>
+          <div class="small" style="color:var(--slate);margin-top:6px">${escapeHtml(it.message)}</div>
+          <div class="small" style="color:var(--slate);margin-top:6px">${new Date(it.time).toLocaleString()}</div>
+          <div style="margin-top:8px"><button class="action-btn" onclick="markAllSeen()">Mark seen</button></div>`;
+        container.appendChild(row);
+      } else {
+        const f = it.file;
+        const row = document.createElement('div');
+        row.style.padding = '8px'; row.style.borderBottom = '1px solid rgba(255,255,255,0.02)';
+        const title = escapeHtml(f.originalName || f.filename || 'Untitled');
+        const time = new Date(f.uploadedAt).toLocaleString();
+        row.innerHTML = `<div style="font-weight:600">${title}</div>
+          <div class="small" style="color:var(--slate)">${time}</div>
+          <div style="margin-top:6px">
+            <a href="${escapeHtml(f.url)}" target="_blank" style="color:var(--accent)">Open</a>
+            <button class="action-btn" style="margin-left:6px" onclick="notifDownload('${f._id || ''}', '${escapeHtml(f.url || '')}')">Download</button>
+          </div>`;
+        container.appendChild(row);
+      }
+    });
+  }
+
+  function markAllSeen(){
+    // mark both files and billboard as seen
+    localStorage.setItem(NOTIF_FILE_KEY, new Date().toISOString());
+    // persist current billboard message as seen if present
+    (async ()=>{
+      try {
+        const res = await fetch((API_BASE||'') + '/api/billboard', { cache: 'no-store' });
+        if (res.ok) {
+          const d = await res.json();
+          if (d && d.billboard && d.billboard.message) localStorage.setItem(NOTIF_BB_KEY, d.billboard.message);
+        }
+      } catch(e){ /* ignore */ }
+      sessionStorage.removeItem('notifItems');
+      hideNotifBadge();
+      renderNotifPanel();
+    })();
+  }
+
+function notifDownload(id, url){
+  if (id) {
+    const dl = (API_BASE || '') + '/api/download/' + encodeURIComponent(id);
+    const a = document.createElement('a'); a.href = dl; a.target = '_blank'; document.body.appendChild(a); a.click(); a.remove();
+  } else if (url) {
+    // use the server-side external-download proxy to force attachment
+    const proxy = (API_BASE || '') + '/api/external-download?url=' + encodeURIComponent(url);
+    const a = document.createElement('a'); a.href = proxy; a.target = '_blank'; document.body.appendChild(a); a.click(); a.remove();
+  }
+}
+
+  /* ========== UI wiring for notif panel button ========== */
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const btn = el('notifBtn');
+    const panel = el('notifPanel');
+    const markBtn = el('markAllSeen');
+    btn && btn.addEventListener('click', ()=>{
+      notifPanelOpen = !notifPanelOpen;
+      panel.style.display = notifPanelOpen ? 'block' : 'none';
+      btn.setAttribute('aria-expanded', String(notifPanelOpen));
+      if (notifPanelOpen) renderNotifPanel();
+    });
+    markBtn && markBtn.addEventListener('click', ()=>{ markAllSeen(); panel.style.display='none'; notifPanelOpen=false; });
+  });
+
+  // start polling
+  pollNotifications();
+  setInterval(pollNotifications, NOTIF_POLL_INTERVAL);
+
+  /* ========== FILE LIST & PREVIEW ========== */
+  async function loadFiles(){
+    try {
+      const res = await fetch((API_BASE || '') + '/api/files', { cache: 'no-store' });
+      if (!res.ok) throw new Error(res.statusText || 'files failed');
+      const data = await res.json();
+      if (!data || !data.files) throw new Error('Invalid files response');
+      renderContentGrid(data.files || []);
+    } catch (err) {
+      console.error('loadFiles error', err);
+      contentGrid.innerHTML = `<div style="padding:20px; color:var(--slate)">Could not load content — ${escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  function filterContent(){
+    renderContentGrid(_lastFiles || []);
+    logActivity('filter_content', el('contentDropdown').value);
+  }
+
+  let _lastFiles = [];
+
+  function renderContentGrid(files){
+    _lastFiles = files;
+    const filter = el('contentDropdown').value;
+    const grid = contentGrid;
+    grid.innerHTML = '';
+    files.sort((a,b)=> new Date(b.uploadedAt) - new Date(a.uploadedAt));
+    const filtered = files.filter(item => (filter==='all' || item.type === filter));
+    if (!filtered.length) {
+      grid.innerHTML = `<div style="padding:20px;color:var(--slate)">No items</div>`;
+      return;
+    }
+    filtered.forEach(item=>{
+      const card = document.createElement('div');
+      card.className = 'content-card';
+      const title = escapeHtml(item.originalName || item.filename || 'Untitled');
+      const desc = item.mimeType ? `${escapeHtml(item.mimeType)} • ${Math.round((item.size||0)/1024)} KB` : '';
+      let thumbHtml = '';
+      const url = item.url || '';
+      if (item.type === 'images') {
+        let imgUrl = url.includes('drive.google.com') ? convertDriveLinkForDownload(url) : url;
+        thumbHtml = `<img src="${escapeHtml(imgUrl)}" alt="${title}" style="width:100%; height:150px; object-fit:cover; border-radius:10px; margin-bottom:15px;">`;
+      } else {
+        thumbHtml = `<div style="width:100%; height:150px; border-radius:10px; background:linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); display:flex; align-items:center; justify-content:center; margin-bottom:15px; color:var(--accent); font-size:2em;">${getTypeEmoji(item.type)}</div>`;
+      }
+
+      card.innerHTML = `
+        ${thumbHtml}
+        <h3 class="content-title">${title}</h3>
+        <div class="content-type">${escapeHtml(item.type)}</div>
+        <p class="content-description">${escapeHtml(desc)}</p>
+        <div class="content-actions"></div>
+      `;
+      // actions (attach listeners)
+      const actions = card.querySelector('.content-actions');
+      const viewBtn = document.createElement('button'); viewBtn.className='action-btn'; viewBtn.textContent='View';
+      const dlBtn = document.createElement('button'); dlBtn.className='action-btn'; dlBtn.textContent='Download';
+      viewBtn.addEventListener('click', ()=> viewContent(item));
+      dlBtn.addEventListener('click', ()=> downloadFile(item));
+      actions.appendChild(viewBtn); actions.appendChild(dlBtn);
+      grid.appendChild(card);
+    });
+  }
+
+  function getTypeEmoji(type){ if(type==='images')return '📸'; if(type==='videos')return '🎬'; if(type==='audio')return '🎵'; if(type==='pdfs')return '📚'; return '📁'; }
+
+  /* ========== VIEW & DOWNLOAD ========== */
+  function viewContent(item){
+    const title = escapeHtml(item.originalName || item.filename || 'Preview');
+    let html = `<h2 id="modalTitle" style="color:var(--white); margin-bottom:20px;">${title}</h2>`;
+    const url = item.url || '';
+    if (item.type === 'images') {
+      let imgUrl = url.includes('drive.google.com') ? convertDriveLinkForDownload(url) : url;
+      html += `<img src="${escapeHtml(imgUrl)}" alt="${title}" style="width:100%; border-radius:10px;">`;
+      html += `<p class="small" style="margin-top:12px">${escapeHtml(item.mimeType||'')}</p>`;
+    } else if (item.type === 'videos') {
+      let v = url.includes('drive.google.com') ? convertDriveLinkForDownload(url) : url;
+      html += `<video controls style="width:100%; max-height:60vh; border-radius:10px;"><source src="${escapeHtml(v)}" type="${escapeHtml(item.mimeType||'')}">Your browser doesn't support video playback.</video>`;
+    } else if (item.type === 'audio') {
+      let a = url.includes('drive.google.com') ? convertDriveLinkForDownload(url) : url;
+      html += `<audio controls style="width:100%;"><source src="${escapeHtml(a)}" type="${escapeHtml(item.mimeType||'')}">Your browser doesn't support audio playback.</audio>`;
+    } else if (item.type === 'pdfs') {
+      let embed = url.includes('drive.google.com') ? convertDriveLinkForEmbed(url) : url;
+      html += `<div style="width:100%; height:70vh;"><iframe src="${escapeHtml(embed)}" style="width:100%; height:100%; border:0; border-radius:8px;"></iframe></div>`;
+    } else {
+      html += `<p class="small">No preview available. Use Download.</p>`;
+    }
+
+    // download href: prefer backend proxy if available (item._id), else direct/drive converted link
+    const downloadHref = item._id ? ((API_BASE || '') + '/api/download/' + encodeURIComponent(item._id)) : (item.url && item.url.includes('drive.google.com') ? convertDriveLinkForDownload(item.url) : item.url || '#');
+    html += `<div style="margin-top:18px;"><a href="${escapeHtml(downloadHref)}" download="${escapeHtml(item.originalName || item.filename || 'download')}"><button class="action-btn">Download</button></a></div>`;
+
+    modalBody.innerHTML = html;
+    modal.style.display = 'flex'; modal.setAttribute('aria-hidden','false');
+    logActivity('view_content', item.originalName || item.filename);
+  }
+
+function downloadFile(item){
+  if (item._id) {
+    const url = (API_BASE || '') + '/api/download/' + encodeURIComponent(item._id);
+    const a = document.createElement('a'); a.href = url; a.target = '_blank'; document.body.appendChild(a); a.click(); a.remove();
+  } else if (item.url) {
+    // use server proxy for external URLs to force download (better than direct Drive link)
+    const proxy = (API_BASE || '') + '/api/external-download?url=' + encodeURIComponent(item.url);
+    const a = document.createElement('a'); a.href = proxy; a.target = '_blank'; document.body.appendChild(a); a.click(); a.remove();
+  } else {
+    alert('No downloadable URL available for this item.');
+  }
+  logActivity('download_content', item.originalName || item.filename);
+}
+
+  /* modal handlers */
+  modalCloseBtn.addEventListener('click', closeModal);
+  window.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+  window.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  function closeModal(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); modalBody.innerHTML=''; }
+
+  /* ========== HEARTS & ROTATING BILLBOARD ========== */
+  const billboardMessages = [
+    "Every moment with you feels like a beautiful story being written. Thank you for being the amazing person you are! 🌟",
+    "You light up my world in ways you'll never know. Your smile is my favorite notification! 💫",
+    "Distance means nothing when someone means everything. Can't wait for our next adventure! 🎨",
+    "Your presence makes ordinary moments feel extraordinary. Thank you for being you! ✨",
+    "Life is better with you in it. Here's to all our memories and the ones we're yet to make! 🌈"
+  ];
+  let billboardIndex = 0;
+  function rotateBillboardMessage(){
+    billboardIndex = (billboardIndex + 1) % billboardMessages.length;
+    billboardMsgEl.style.opacity = '0';
+    setTimeout(()=>{ billboardMsgEl.textContent = billboardMessages[billboardIndex]; billboardMsgEl.style.transition='opacity .5s'; billboardMsgEl.style.opacity='1'; }, 400);
+  }
+  function createHeart(){
+    const hearts = el('hearts');
+    const heart = document.createElement('div'); heart.className='heart'; heart.innerHTML='💖';
+    heart.style.left = Math.random()*100 + '%';
+    heart.style.animationDuration = (Math.random()*3 + 3) + 's';
+    hearts.appendChild(heart);
+    setTimeout(()=>heart.remove(),7000);
+  }
+
+  /* ========== LOGGING (local + server visit) ========== */
+  function logActivity(action, details=''){
+    const entry = { action, details, timestamp: new Date().toISOString(), user: userData.name || 'anonymous' };
+    activityLog.push(entry); localStorage.setItem('activityLog', JSON.stringify(activityLog));
+    console.log('Activity logged:', entry);
+  }
+  async function sendVisitLog(){
+    try {
+      const payload = { name: userData.name || null, normalizedName: userData.normalizedName || null };
+      const url = (API_BASE || '') + '/api/log';
+      await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)});
+    } catch(e){ console.warn('log failed', e); }
+  }
+
+  /* ========== LOGIN / INIT / SHOW PAGES ========== */
+  enterBtn.addEventListener('click', handleLogin);
+  function handleLogin(){
+    const raw = nameInput.value || ''; const normalized = normalizeName(raw);
+    if (!normalized){ alert('Please enter your name'); return; }
+    if (blockedUsers.includes(normalized)){ showDefaultPage(); logActivity('blocked_attempt', normalized); return; }
+    if (userData.name && userData.isAuthenticated && normalizeName(userData.name) === normalized){ showMainPage(); return; }
+    if (registrationLocked){ attemptCount++; localStorage.setItem('attemptCount', String(attemptCount)); if (attemptCount >= MAX_ATTEMPTS){ blockedUsers.push(normalized); localStorage.setItem('blockedUsers', JSON.stringify(blockedUsers)); } logActivity('registration_locked_attempt', normalized); showDefaultPage(); return; }
+    const isAllowed = ALLOWED_NAMES.includes(normalized);
+    if (!isAllowed){ logActivity('unauthorized_name', normalized); showDefaultPage(); return; }
+    // success
+    userData = { name: raw.trim(), normalizedName: normalized, isAuthenticated: true, registeredAt: new Date().toISOString() };
+    localStorage.setItem('userData', JSON.stringify(userData));
+    const reg = JSON.parse(localStorage.getItem('registeredUsers') || '[]'); if (!reg.includes(normalized)){ reg.push(normalized); localStorage.setItem('registeredUsers', JSON.stringify(reg)); }
+    const distinctAllowedRegistered = reg.filter(n => ALLOWED_NAMES.includes(n)).length;
+    if (distinctAllowedRegistered >= 2){ localStorage.setItem('registrationLocked', 'true'); registrationLocked = true; }
+    logActivity('login', raw.trim());
+    showMainPage();
+  }
+
+  function showMainPage(){
+    loginContainer.style.display = 'none'; defaultPage.style.display = 'none'; mainContainer.style.display = 'block';
+    updateWelcomeMessage();
+    loadFiles();
+    sendVisitLog();
+    logActivity('page_view', 'main');
+  }
+  function showDefaultPage(){ loginContainer.style.display = 'none'; mainContainer.style.display = 'none'; defaultPage.style.display = 'block'; }
+  function updateWelcomeMessage(){
+    const hour = new Date().getHours(); const name = (userData && userData.name) || 'Friend';
+    let greeting = '', timeMessage = '';
+    if (hour < 5) { greeting = `Late night thoughts with ${name} ✨`; timeMessage = "The stars are shining just for you tonight"; }
+    else if (hour < 12) { greeting = `Good morning, ${name}! ☀️`; timeMessage = "Hope your day is as wonderful as you are"; }
+    else if (hour < 17) { greeting = `Good afternoon, ${name}! 🌤`; timeMessage = "Sending you sunshine and smiles"; }
+    else if (hour < 20) { greeting = `Good evening, ${name}! 🌅`; timeMessage = "The sunset reminds me of your beautiful smile"; }
+    else { greeting = `Sweet night, ${name}! 🌙`; timeMessage = "The moon and stars are jealous of your glow"; }
+    el('welcomeMessage').textContent = greeting; el('timeGreeting').textContent = timeMessage;
+  }
+
+  /* ========== FETCH initial billboard and start intervals ========== */
+  async function fetchBillboardToMessages(){
+    try {
+      const r = await fetch((API_BASE || '') + '/api/billboard', { cache: 'no-store' });
+      if (!r.ok) return;
+      const d = await r.json();
+      if (d && d.billboard && d.billboard.message) {
+        billboardMessages[0] = d.billboard.message;
+        if (mainContainer.style.display === 'block') billboardMsgEl.textContent = d.billboard.message;
+      }
+    } catch(e){ console.warn('fetchBillboard error', e); }
+  }
+
+  window.onload = function(){
+    if (userData.name && userData.isAuthenticated) showMainPage();
+    else if (registrationLocked) showDefaultPage();
+    else loginContainer.style.display = 'flex';
+    setInterval(createHeart, 3000);
+    setInterval(rotateBillboardMessage, 10000);
+    setInterval(updateWelcomeMessage, 60000);
+    fetchBillboardToMessages();
+    // start notification polling has already been started above
+  };
+
+  /* ========== expose small helpers for debugging ========== */
+  window.viewActivityLog = ()=> { console.table(activityLog); return activityLog; };
+  window.resetApp = ()=> { if (confirm('Reset app? This clears local storage for this browser.')){ localStorage.clear(); location.reload(); } };
+  window.updateBillboard = (message)=> { billboardMsgEl.textContent = message; logActivity('billboard_updated', message); };
+  window.markAllSeen = markAllSeen;
+  window.notifDownload = notifDownload;
+
+  </script>
+</body>
+</html>

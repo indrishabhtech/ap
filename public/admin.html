@@ -1,0 +1,638 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Admin Panel — Private Site (Unified)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    :root{
+      --bg:#071029; --card:rgba(255,255,255,0.03);
+      --muted:#9ac8ff; --accent:#64ffda; --accent-dark:#00d4a6;
+      --white:#e8f7ff;
+    }
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--white);padding:20px;min-height:100vh;}
+    .wrap{max-width:1200px;margin:0 auto;}
+    .card{background:var(--card);padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);margin-bottom:16px;}
+    h1{margin:0 0 6px}
+    label{display:block;color:var(--muted);margin:10px 0 6px;font-size:.95rem}
+    input[type="text"], input[type="password"], select, .search, textarea{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--white)}
+    input[type="file"]{color:var(--muted)}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .col{flex:1;min-width:180px}
+    button{background:var(--accent-dark);color:#012;border:none;padding:10px 12px;border-radius:8px;cursor:pointer}
+    .small{color:var(--muted);font-size:.9rem}
+    .result{margin-top:8px;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02)}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle;text-align:left}
+    .thumb{width:72px;height:48px;border-radius:6px;object-fit:cover;background:linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:block}
+    .action-btn{padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--accent);cursor:pointer}
+    .danger{background:#ff6b6b;color:#fff;border:none}
+    .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,0.02);color:var(--muted);font-size:.85rem}
+    .progress-bar{height:10px;background:rgba(255,255,255,0.04);border-radius:6px;overflow:hidden}
+    .progress-bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#57cbff);width:0%}
+    .filters{display:flex;gap:12px;align-items:center}
+    .meta-input{width:calc(100% - 120px);display:inline-block;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--white)}
+    .muted{color:var(--muted)}
+    .flex-between{display:flex;justify-content:space-between;align-items:center}
+    @media (max-width:900px){ .row{flex-direction:column} .col{min-width:auto} table th:nth-child(1), table td:nth-child(1){display:none} }
+    code{background:rgba(255,255,255,0.02);padding:4px 6px;border-radius:6px;color:var(--light-slate)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- Top controls -->
+    <div class="card">
+      <div class="flex-between">
+        <div>
+          <h1>Admin — Upload & Manage Files</h1>
+          <p class="small">Files upload to Cloudinary (or external) and metadata saved in MongoDB. Use admin password from your backend <code>.env</code>.</p>
+        </div>
+        <div style="min-width:260px">
+          <label>API Base URL</label>
+          <input id="apiBase" type="text" value="http://localhost:3000" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <div class="col">
+          <label>Admin password</label>
+          <input id="password" type="password" placeholder="Admin password (backend .env)" />
+        </div>
+
+        <div class="col">
+          <label>Type</label>
+          <select id="type">
+            <option value="images">Images</option>
+            <option value="videos">Videos</option>
+            <option value="audio">Audio</option>
+            <option value="pdfs">PDFs</option>
+          </select>
+        </div>
+      </div>
+
+      <label style="margin-top:12px">Choose file(s) to upload (multiple allowed)</label>
+      <input id="file" type="file" multiple />
+
+      <div style="margin-top:12px" class="row">
+        <div>
+          <button id="uploadBtn">Upload Selected</button>
+        </div>
+        <div style="flex:1">
+          <div class="progress-bar" id="overallProgress" title="Overall progress"><i></i></div>
+        </div>
+        <div style="min-width:180px">
+          <button id="addExternalToggle" style="background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--accent)">Add External URL</button>
+        </div>
+      </div>
+
+      <div id="uploadStatus" class="result" style="display:none"></div>
+      <p class="small" style="margin-top:10px">Tip: use multiple-select to upload many files at once. Use "Add External URL" to add Drive links or other host URLs.</p>
+
+      <!-- Add External URL panel (hidden by default) -->
+      <div id="externalPanel" style="margin-top:12px;display:none;border-top:1px dashed rgba(255,255,255,0.04);padding-top:12px">
+        <label>Add external URL (Google Drive / direct link)</label>
+        <input id="externalUrl" placeholder="https://drive.google.com/... or https://example.com/file.pdf" />
+        <label style="margin-top:8px">Type</label>
+        <select id="externalType">
+          <option value="pdfs">PDF</option>
+          <option value="images">Image</option>
+          <option value="videos">Video</option>
+          <option value="audio">Audio</option>
+        </select>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button id="addExternalBtn">Add URL</button>
+          <div id="externalStatus" class="small" style="align-self:center"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Billboard -->
+    <div class="card">
+      <h3>Billboard Message</h3>
+      <p class="small">Edit message shown on the main page billboard</p>
+      <textarea id="billboardText" rows="3" placeholder="Write something beautiful..."></textarea>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button id="saveBillboard">Save</button>
+        <button id="clearBillboard" class="danger">Clear</button>
+        <div style="flex:1"></div>
+        <div id="billboardStatus" class="small"></div>
+      </div>
+    </div>
+
+    <!-- Files list / search / filters -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:180px">
+          <label>Search</label>
+          <input id="search" class="search" placeholder="Search by filename or title..." />
+        </div>
+        <div style="min-width:220px">
+          <label>Filter</label>
+          <div class="filters">
+            <select id="filterType">
+              <option value="all">All types</option>
+              <option value="images">Images</option>
+              <option value="videos">Videos</option>
+              <option value="audio">Audio</option>
+              <option value="pdfs">PDFs</option>
+            </select>
+            <div style="flex:1"></div>
+            <div class="pill" id="totalCount">—</div>
+          </div>
+        </div>
+        <div style="min-width:140px">
+          <label>&nbsp;</label>
+          <div style="display:flex;gap:8px">
+            <button id="refresh">Refresh</button>
+            <button id="downloadAll" title="Download is handled per-file">Download</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="filesList" style="margin-top:12px">
+        <table id="filesTable" aria-live="polite">
+          <thead>
+            <tr>
+              <th style="width:80px">Thumb</th>
+              <th>File</th>
+              <th style="width:150px">Type / Size</th>
+              <th style="width:300px">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="filesTbody">
+            <tr><td colspan="4" class="muted" style="padding:20px">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+        <button id="prevPage">Prev</button>
+        <button id="nextPage">Next</button>
+      </div>
+    </div>
+
+    <!-- Device logs -->
+    <div class="card">
+      <h3>Device Access Logs</h3>
+      <p class="small">Visits recorded by the client when the main page opened</p>
+      <table>
+        <thead><tr><th>Time</th><th>Name</th><th>Normalized</th><th>IP</th><th>User Agent</th></tr></thead>
+        <tbody id="logsTbody"><tr><td colspan="5" class="muted" style="padding:20px">Loading…</td></tr></tbody>
+      </table>
+      <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end"><button id="refreshLogs">Refresh Logs</button></div>
+    </div>
+
+    <!-- Reset -->
+    <div class="card">
+      <h3>Reset / Wipe Data</h3>
+      <p class="small">This will delete all files from the database and Cloudinary, clear logs and billboard. This is irreversible.</p>
+      <div style="display:flex;gap:8px;align-items:center"><button id="resetBtn" class="danger">Reset All Data</button><div id="resetStatus" class="small"></div></div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div id="previewModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;padding:20px">
+      <div style="width:100%;max-width:920px;background:var(--card);border-radius:12px;padding:18px;position:relative">
+        <button id="closePreview" style="position:absolute;right:12px;top:12px;border:none;background:#fff;color:#000;padding:6px 10px;border-radius:8px;cursor:pointer">Close</button>
+        <div id="previewBody"></div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+/* Unified Admin JS
+   - Uploads / external-links / preview / edit / delete
+   - Billboard CRUD
+   - Device logs & reset
+   - Robust error display when backend route missing (eg "Cannot POST /api/file")
+*/
+
+/* --------- small helpers --------- */
+const el = id => document.getElementById(id);
+function showStatus(id, text, ok = true) { const e = el(id); if (!e) return; e.style.display = 'block'; e.textContent = text; e.style.color = ok ? '#bfffe3' : '#ffd1d1'; }
+function esc(s){ return (s||'').toString().replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function apiUrl(path){ const base = (el('apiBase').value || '').replace(/\/$/,''); return (base || '') + path; }
+async function doAuthFetch(url, opts = {}) {
+  opts.headers = opts.headers || {};
+  const pw = el('password').value || '';
+  if (!(opts.body instanceof FormData)) {
+    if (pw) opts.headers['x-admin-password'] = pw;
+  }
+  return fetch(url, opts);
+}
+
+/* --------- Upload (XHR + progress) --------- */
+el('uploadBtn').addEventListener('click', ()=> {
+  const files = el('file').files;
+  if (!files || files.length === 0) { showStatus('uploadStatus','Pick files', false); return; }
+  const type = el('type').value;
+  const pw = el('password').value;
+  if (!pw) { showStatus('uploadStatus','Enter admin password', false); return; }
+  uploadFiles(Array.from(files), type, pw);
+});
+
+function uploadFiles(files, type, password){
+  el('uploadStatus').style.display='block';
+  el('uploadStatus').textContent = '';
+  const overall = el('overallProgress').querySelector('i');
+  overall.style.width = '0%';
+  let idx = 0;
+  function next(){
+    if (idx >= files.length) { showStatus('uploadStatus','All uploads finished'); fetchFiles(); return; }
+    uploadSingle(files[idx], type, password, (ok)=>{ idx++; overall.style.width = Math.round((idx/files.length)*100) + '%'; next(); });
+  }
+  next();
+}
+
+function uploadSingle(file, type, password, cb){
+  const container = document.createElement('div');
+  container.style.marginTop='10px';
+  el('uploadStatus').appendChild(container);
+
+  const xhr = new XMLHttpRequest();
+  const url = apiUrl('/api/upload');
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('type', type);
+  fd.append('password', password);
+
+  xhr.open('POST', url, true);
+  xhr.upload.onprogress = function(e){
+    if (e.lengthComputable) {
+      const pct = Math.round((e.loaded/e.total)*100) + '%';
+      container.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><div style="flex:1">${esc(file.name)}</div><div style="width:160px"><div class="progress-bar"><i style="width:${pct}"></i></div></div><div style="width:48px;text-align:right">${pct}</div></div>`;
+    }
+  };
+  xhr.onload = function(){
+    if (xhr.status >= 200 && xhr.status < 300) {
+      let data = {};
+      try { data = JSON.parse(xhr.responseText || '{}'); } catch(e){}
+      container.innerHTML += `<div class="small" style="margin-top:6px;color:#bfffe3">Uploaded: ${esc(data.originalName||data.filename||file.name)}</div>`;
+      cb(true);
+    } else {
+      container.innerHTML += `<div class="small" style="margin-top:6px;color:#ffd1d1">Upload failed: ${xhr.status}</div>`;
+      cb(false);
+    }
+  };
+  xhr.onerror = function(){ container.innerHTML += `<div class="small" style="margin-top:6px;color:#ffd1d1">Network error</div>`; cb(false); };
+  xhr.send(fd);
+}
+
+/* --------- Add external URL (POST /api/file) --------- */
+el('addExternalToggle').addEventListener('click', ()=> {
+  const pan = el('externalPanel');
+  pan.style.display = (pan.style.display === 'none' || pan.style.display === '') ? 'block' : 'none';
+});
+el('addExternalBtn').addEventListener('click', async () => {
+  const url = (el('externalUrl').value || '').trim();
+  const type = el('externalType').value;
+  const pw = el('password').value;
+  const status = el('externalStatus');
+  status.textContent = '';
+  if (!url) { status.textContent = 'Enter a URL'; return; }
+  if (!pw) { status.textContent = 'Enter admin password'; return; }
+  status.textContent = 'Adding...';
+  try {
+    const res = await fetch(apiUrl('/api/file'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': pw },
+      body: JSON.stringify({ url, type, originalName: url.split('/').pop() })
+    });
+    const text = await res.text();
+    // If server responds with HTML (Express default error page) or 404, give helpful guidance
+    const contentType = res.headers.get('content-type') || '';
+    if (!res.ok) {
+      if (contentType.includes('text/html') && text.includes('Cannot POST')) {
+        status.innerHTML = 'Server responded: <code>Cannot POST /api/file</code>. Your backend may not have the POST /api/file route mounted. See instructions below.';
+        status.style.color = '#ffd1d1';
+        // Provide short suggestion user can copy (not automatically executed)
+        showServerFixHint();
+        return;
+      } else {
+        status.innerText = 'Failed: ' + (text || res.status);
+        status.style.color = '#ffd1d1';
+        return;
+      }
+    }
+    // success
+    status.innerText = 'Added';
+    status.style.color = '#bfffe3';
+    el('externalUrl').value = '';
+    await fetchFiles();
+  } catch (e) {
+    status.innerText = 'Error: ' + e.message;
+    status.style.color = '#ffd1d1';
+  }
+});
+
+function showServerFixHint(){
+  // Display an inline hint with the minimal server code the backend needs to support POST /api/file.
+  // (This is only shown when the response looks like Express "Cannot POST /api/file".)
+  const hintId = 'serverFixHint';
+  if (document.getElementById(hintId)) return;
+  const block = document.createElement('div');
+  block.id = hintId;
+  block.style.marginTop = '8px';
+  block.style.padding = '10px';
+  block.style.background = 'rgba(255,255,255,0.02)';
+  block.style.borderRadius = '8px';
+  block.innerHTML = `<div class="small" style="color:var(--muted)">Quick server hint (paste into your server):</div>
+<pre style="margin-top:6px;color:var(--muted);font-size:12px">app.post('/api/file', async (req, res) =&gt; {
+  // validate admin password in header/body, then create DB record:
+  // { url, originalName, type, mimeType, size, publicId }
+  // return JSON { ok:true, file: doc }
+});</pre>
+<div class="small" style="margin-top:6px;color:var(--muted)">If you used a router (express.Router), ensure it is mounted: <code>app.use(router)</code> or <code>app.use('/api', router)</code>.</div>`;
+  el('externalPanel').appendChild(block);
+}
+
+/* --------- Billboard management (GET, POST, DELETE) --------- */
+async function loadBillboard(){
+  try {
+    const res = await fetch(apiUrl('/api/billboard'));
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data && data.billboard && data.billboard.message) el('billboardText').value = data.billboard.message;
+  } catch (err) { console.warn('billboard load', err); }
+}
+el('saveBillboard').addEventListener('click', async ()=> {
+  const msg = el('billboardText').value.trim();
+  if (!msg) { showStatus('billboardStatus','Message empty', false); return; }
+  try {
+    const res = await doAuthFetch(apiUrl('/api/billboard'), { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: msg }) });
+    const text = await res.text();
+    if (!res.ok) { showStatus('billboardStatus','Save failed: '+text,false); return; }
+    showStatus('billboardStatus','Saved');
+    // update main site's billboard notifications will be picked up by polling client-side
+  } catch (e) { showStatus('billboardStatus','Error: '+e.message,false); }
+});
+el('clearBillboard').addEventListener('click', async ()=> {
+  if (!confirm('Clear billboard?')) return;
+  try {
+    const res = await doAuthFetch(apiUrl('/api/billboard'), { method:'DELETE' });
+    const text = await res.text();
+    if (!res.ok) { showStatus('billboardStatus','Clear failed: '+text,false); return; }
+    el('billboardText').value = '';
+    showStatus('billboardStatus','Cleared');
+  } catch (e) { showStatus('billboardStatus','Error: '+e.message,false); }
+});
+
+/* --------- Files listing, pagination, filtering (DOM-safe) --------- */
+const pageSize = 10;
+let filesCache = [];
+let page = 0;
+
+async function fetchFiles(){
+  const tbody = el('filesTbody');
+  tbody.innerHTML = '<tr><td colspan="4" class="muted" style="padding:20px">Loading…</td></tr>';
+  try {
+    const res = await fetch(apiUrl('/api/files'), { cache: 'no-store' });
+    if (!res.ok) throw new Error('Files API returned ' + res.status);
+    const data = await res.json();
+    if (!data || !data.files) throw new Error('Invalid files response');
+    filesCache = data.files;
+    el('totalCount').textContent = filesCache.length + ' files';
+    page = 0;
+    renderPage();
+  } catch (err) {
+    console.error(err);
+    el('filesTbody').innerHTML = '<tr><td colspan="4" class="muted" style="padding:20px">Could not load files — '+esc(err.message)+'</td></tr>';
+  }
+}
+
+function renderPage(){
+  const tbody = el('filesTbody'); tbody.innerHTML = '';
+  const q = (el('search').value || '').toLowerCase();
+  const filter = el('filterType').value;
+  const filtered = filesCache.filter(f => {
+    if (filter !== 'all' && f.type !== filter) return false;
+    if (q && !((f.originalName || f.filename || '').toLowerCase().includes(q))) return false;
+    return true;
+  });
+  const total = filtered.length;
+  el('totalCount').textContent = total + ' files (filtered)';
+  const start = page * pageSize;
+  const pageItems = filtered.slice(start, start + pageSize);
+  if (pageItems.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="muted" style="padding:20px">No files found.</td></tr>';
+    return;
+  }
+
+  pageItems.forEach(item => {
+    const tr = document.createElement('tr');
+
+    // Thumb
+    const tdThumb = document.createElement('td');
+    if (item.type === 'images') {
+      const img = document.createElement('img');
+      img.className = 'thumb';
+      img.src = item.url || '';
+      img.alt = item.originalName || item.filename || '';
+      tdThumb.appendChild(img);
+    } else {
+      const icon = document.createElement('div');
+      icon.style.display = 'flex';
+      icon.style.alignItems = 'center';
+      icon.style.justifyContent = 'center';
+      icon.style.width = '72px';
+      icon.style.height = '48px';
+      icon.style.borderRadius = '6px';
+      icon.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))';
+      icon.style.fontSize = '22px';
+      icon.textContent = item.type === 'videos' ? '🎬' : item.type === 'audio' ? '🎵' : '📄';
+      tdThumb.appendChild(icon);
+    }
+
+    // File column
+    const tdFile = document.createElement('td');
+    const titleDiv = document.createElement('div'); titleDiv.style.fontWeight = '600'; titleDiv.textContent = item.originalName || item.filename || 'Untitled';
+    const metaDiv = document.createElement('div'); metaDiv.className = 'small muted'; metaDiv.textContent = item.publicId || '';
+    const timeDiv = document.createElement('div'); timeDiv.className = 'small'; timeDiv.style.marginTop = '6px'; timeDiv.textContent = new Date(item.uploadedAt).toLocaleString();
+    tdFile.appendChild(titleDiv); tdFile.appendChild(metaDiv); tdFile.appendChild(timeDiv);
+
+    // Type/Size
+    const tdType = document.createElement('td');
+    const pill = document.createElement('div'); pill.className = 'pill'; pill.textContent = item.type;
+    const sizeDiv = document.createElement('div'); sizeDiv.className = 'small'; sizeDiv.style.marginTop = '6px'; sizeDiv.textContent = (item.mimeType || '') + ' • ' + fmtSize(item.size);
+    tdType.appendChild(pill); tdType.appendChild(sizeDiv);
+
+    // Actions
+    const tdActions = document.createElement('td');
+    const wrap = document.createElement('div'); wrap.style.display='flex'; wrap.style.gap='8px'; wrap.style.flexWrap='wrap';
+
+    // Preview
+    const btnPreview = document.createElement('button'); btnPreview.className='action-btn'; btnPreview.textContent='Preview';
+    btnPreview.addEventListener('click', ()=> previewFile(item));
+    // Download
+    const btnDownload = document.createElement('button'); btnDownload.className='action-btn'; btnDownload.textContent='Download';
+    btnDownload.addEventListener('click', ()=> downloadFile(item._id, item.url));
+    // Open
+    const btnOpen = document.createElement('button'); btnOpen.className='action-btn'; btnOpen.textContent='Open';
+    btnOpen.addEventListener('click', ()=> window.open(item.url, '_blank'));
+    // Copy URL
+    const btnCopy = document.createElement('button'); btnCopy.className='action-btn'; btnCopy.textContent='Copy URL';
+    btnCopy.addEventListener('click', ()=> { navigator.clipboard?.writeText(item.url || '').then(()=> showStatus('uploadStatus','URL copied')).catch(()=> showStatus('uploadStatus','Copy failed',false)); });
+    // Edit
+    const btnEdit = document.createElement('button'); btnEdit.className='action-btn'; btnEdit.textContent='Edit';
+    btnEdit.addEventListener('click', ()=> showEdit(item));
+    // Delete
+    const btnDelete = document.createElement('button'); btnDelete.className='action-btn danger'; btnDelete.textContent='Delete';
+    btnDelete.addEventListener('click', ()=> deleteFile(item._id));
+
+    wrap.appendChild(btnPreview); wrap.appendChild(btnDownload); wrap.appendChild(btnOpen); wrap.appendChild(btnCopy); wrap.appendChild(btnEdit); wrap.appendChild(btnDelete);
+    tdActions.appendChild(wrap);
+
+    tr.appendChild(tdThumb); tr.appendChild(tdFile); tr.appendChild(tdType); tr.appendChild(tdActions);
+    tbody.appendChild(tr);
+  });
+}
+
+function fmtSize(n){ if(!n && n !== 0) return ''; if(n<1024) return n+' B'; if(n<1024*1024) return Math.round(n/1024)+' KB'; return Math.round(n/1024/1024)+' MB'; }
+
+el('refresh').addEventListener('click', ()=> fetchFiles());
+el('search').addEventListener('input', ()=> { page = 0; renderPage(); });
+el('filterType').addEventListener('change', ()=> { page = 0; renderPage(); });
+el('prevPage').addEventListener('click', ()=> { if(page>0){ page--; renderPage(); }});
+el('nextPage').addEventListener('click', ()=> { page++; renderPage(); });
+
+/* --------- Preview / Edit / Delete / Download --------- */
+function previewFile(item){
+  const body = el('previewBody');
+  let html = `<h3 style="margin-top:0">${esc(item.originalName||item.filename)}</h3><div class="small muted">${esc(item.mimeType)} • ${fmtSize(item.size)}</div><div style="margin-top:12px">`;
+  if (item.type === 'images') {
+    html += `<img src="${item.url || ''}" style="width:100%;border-radius:8px">`;
+  } else if (item.type === 'videos') {
+    html += `<video controls style="width:100%;max-height:60vh;border-radius:8px"><source src="${item.url || ''}" type="${esc(item.mimeType || '')}">Your browser does not support video</video>`;
+  } else if (item.type === 'audio') {
+    html += `<audio controls style="width:100%"><source src="${item.url || ''}" type="${esc(item.mimeType || '')}">Your browser does not support audio</audio>`;
+  } else if (item.type === 'pdfs') {
+    const embed = item.url && item.url.includes('drive.google.com') ? convertDriveLinkForEmbed(item.url) : item.url;
+    html += `<iframe src="${embed || ''}" style="width:100%;height:70vh;border-radius:8px;border:0"></iframe>`;
+  } else {
+    html += `<div class="small">No preview available; use download.</div>`;
+  }
+  html += `</div><div style="margin-top:12px"><a class="action-btn" href="${item.url || '#'}" target="_blank">Open</a> <a class="action-btn" href="${item.url || '#'}" download>Download</a></div>`;
+  body.innerHTML = html;
+  el('previewModal').style.display = 'flex';
+}
+el('closePreview').addEventListener('click', ()=> el('previewModal').style.display='none');
+
+function showEdit(item){
+  // show a small inline editor row at top of page - modal would be cleaner but keeping inline
+  // create a modal-like prompt for simplicity
+  const newTitle = prompt('Enter new title (originalName)', item.originalName || item.filename || '');
+  if (newTitle === null) return;
+  if (!newTitle.trim()) { alert('Title cannot be empty'); return; }
+  const pw = el('password').value; if(!pw){ alert('Enter admin password'); return; }
+
+  fetch(apiUrl('/api/file/' + encodeURIComponent(item._id)), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'x-admin-password': pw },
+    body: JSON.stringify({ originalName: newTitle.trim() })
+  })
+  .then(r => r.text().then(t => ({ ok: r.ok, text: t })))
+  .then(result => {
+    if (!result.ok) { alert('Edit failed: ' + result.text); return; }
+    showStatus('uploadStatus','Updated metadata');
+    fetchFiles();
+  }).catch(e => alert('Error: ' + e.message));
+}
+
+function deleteFile(id){
+  if(!confirm('Delete this file? This action is permanent.')) return;
+  const pw = el('password').value; if(!pw){ alert('Enter admin password'); return; }
+  showStatus('uploadStatus','Deleting...');
+  fetch(apiUrl('/api/file/' + encodeURIComponent(id)), { method:'DELETE', headers:{ 'x-admin-password': pw } })
+    .then(async r => {
+      const text = await r.text();
+      if (!r.ok) { showStatus('uploadStatus','Delete failed: ' + text, false); return; }
+      showStatus('uploadStatus','Deleted');
+      fetchFiles();
+    }).catch(e => showStatus('uploadStatus','Error: '+e.message,false));
+}
+
+function downloadFile(id, url){
+  if (id) {
+    // use proxy to force download
+    const dl = apiUrl('/api/download/' + encodeURIComponent(id));
+    const a = document.createElement('a'); a.href = dl; a.target = '_blank'; document.body.appendChild(a); a.click(); a.remove();
+  } else if (url) {
+    const conv = convertDriveLinkForDownload(url);
+    const a = document.createElement('a'); a.href = conv; a.target = '_blank'; document.body.appendChild(a); a.click(); a.remove();
+  } else {
+    alert('No downloadable resource.');
+  }
+}
+
+/* --------- Device logs --------- */
+el('refreshLogs').addEventListener('click', loadLogs);
+async function loadLogs(){
+  const tbody = el('logsTbody');
+  tbody.innerHTML = '<tr><td colspan="5" class="muted" style="padding:20px">Loading…</td></tr>';
+  try {
+    const res = await doAuthFetch(apiUrl('/api/logs'));
+    if (!res.ok) {
+      const t = await res.text().catch(()=> 'error');
+      tbody.innerHTML = '<tr><td colspan="5" class="muted" style="padding:20px">Error loading logs: '+esc(t)+'</td></tr>';
+      return;
+    }
+    const data = await res.json();
+    if (!data || !data.logs) throw new Error('Invalid logs');
+    tbody.innerHTML = '';
+    data.logs.forEach(l => {
+      const tr = document.createElement('tr');
+      const td1 = document.createElement('td'); td1.textContent = new Date(l.timestamp).toLocaleString();
+      const td2 = document.createElement('td'); td2.textContent = l.name || '';
+      const td3 = document.createElement('td'); td3.textContent = l.normalizedName || '';
+      const td4 = document.createElement('td'); td4.textContent = l.ip || '';
+      const td5 = document.createElement('td'); td5.style.maxWidth = '360px'; td5.style.whiteSpace = 'nowrap'; td5.style.overflow = 'hidden'; td5.style.textOverflow = 'ellipsis'; td5.textContent = l.userAgent || '';
+      tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tr.appendChild(td4); tr.appendChild(td5);
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="5" class="muted" style="padding:20px">Error loading logs: '+esc(err.message)+'</td></tr>';
+  }
+}
+
+/* --------- Reset / wipe --------- */
+el('resetBtn').addEventListener('click', async ()=> {
+  if (!confirm('RESET will permanently delete all files from DB and Cloudinary, and clear logs & billboard. Are you sure?')) return;
+  showStatus('resetStatus','Resetting...');
+  try {
+    const res = await doAuthFetch(apiUrl('/api/reset'), { method:'POST' });
+    const text = await res.text();
+    if (!res.ok) { showStatus('resetStatus','Reset failed: '+text,false); return; }
+    showStatus('resetStatus','Reset done');
+    await fetchFiles(); await loadLogs(); el('billboardText').value = '';
+  } catch (e) { showStatus('resetStatus','Error: '+e.message,false); }
+});
+
+/* --------- Google Drive helpers --------- */
+function extractDriveId(url){
+  try {
+    const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (m && m[1]) return m[1];
+    const q = new URL(url);
+    return q.searchParams.get('id');
+  } catch(e){ return null; }
+}
+function convertDriveLinkForEmbed(url){
+  const id = extractDriveId(url); if (id) return `https://drive.google.com/file/d/${id}/preview`; return url;
+}
+function convertDriveLinkForDownload(url){
+  const id = extractDriveId(url); if (id) return `https://drive.google.com/uc?export=download&id=${id}`; return url;
+}
+
+/* --------- init --------- */
+fetchFiles();
+loadBillboard();
+loadLogs();
+
+/* next/prev page safety */
+el('nextPage').addEventListener('click', ()=> { page++; renderPage(); });
+el('prevPage').addEventListener('click', ()=> { if (page>0) page--; renderPage(); });
+
+</script>
+</body>
+</html>
